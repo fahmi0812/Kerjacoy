@@ -18,9 +18,32 @@ Dibangun dari pelajaran repo-repo terbaik yang sudah dianalisis:
 
 ## Instalasi
 
+**Linux / macOS / WSL2** — satu baris (ala `0dayexploit`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fahmi0812/Kerjacoy/main/install.sh | bash
+```
+
+Semua tersimpan di `~/.kerjacoy` (repo di `src/`, venv di `venv/`), perintah
+`kerjacoy` (dan alias pendek `kc`) dipasang di `~/.local/bin`. Jalankan lagi
+kapan saja untuk memperbarui; hapus dengan `bash ~/.kerjacoy/src/install.sh --uninstall`.
+
+**Windows (PowerShell)** — satu baris:
+
+```powershell
+irm https://raw.githubusercontent.com/fahmi0812/Kerjacoy/main/install.ps1 | iex
+```
+
+Semua tersimpan di `%USERPROFILE%\.kerjacoy`, `kerjacoy.cmd` dipasang di
+`bin\` dan ditambahkan ke PATH user. Hapus dengan `install.ps1 -Uninstall`.
+
+**Manual** (bila tidak mau pakai installer):
+
 Linux / macOS:
 
 ```bash
+git clone https://github.com/fahmi0812/Kerjacoy.git
+cd Kerjacoy
 python3 -m venv venv
 source venv/bin/activate
 pip install -e .
@@ -29,13 +52,15 @@ pip install -e .
 Windows (PowerShell):
 
 ```powershell
+git clone https://github.com/fahmi0812/Kerjacoy.git
+cd Kerjacoy
 py -3 -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install -e .
 ```
 
-Setelah instalasi, perintah `kerjacoy` tersedia di mana saja (selama venv
-aktif). Di Windows, konfigurasi tersimpan di `%APPDATA%\kerjacoy`; di
+Setelah instalasi manual, perintah `kerjacoy` tersedia di mana saja (selama
+venv aktif). Di Windows, konfigurasi tersimpan di `%APPDATA%\kerjacoy`; di
 Linux/macOS di `~/.config/kerjacoy`.
 
 > Catatan instalasi: `python-jobspy` punya konflik metadata numpy dengan pip
@@ -46,7 +71,22 @@ Linux/macOS di `~/.config/kerjacoy`.
 > pip install pydantic tls-client requests markdownify regex curl_cffi
 > ```
 
-Kebutuhan: Python 3.10+.
+Kebutuhan: Python 3.10+, git.
+
+## Halaman depan
+
+Jalankan `kerjacoy` tanpa argumen untuk membuka halaman depan: logo besar,
+baris status provider, lalu kotak cari. Ketik kata kunci lowongan langsung
+cari (preset Indonesia, lokasi Indonesia); ketik angka untuk membuka menu
+(1 cari · 2 laporan · 3 nilai · 4 tailor · 5 lacak · 6 provider · 7 cek LLM ·
+0 keluar). Bila belum ada provider, layar tambah provider langsung terbuka:
+isi nama, base URL, API key (diketik tersembunyi), dan model.
+
+Perbarui ke versi terbaru kapan saja (bila terpasang lewat installer):
+
+```bash
+kerjacoy update
+```
 
 ## Cara pakai cepat
 

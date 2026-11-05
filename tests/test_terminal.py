@@ -31,9 +31,36 @@ def test_menu_keluar_langsung(tanpa_provider, monkeypatch):
 
 
 def test_menu_pilihan_tidak_dikenal_lalu_keluar(tanpa_provider, monkeypatch, capsys):
-    _input_antrean(["9", "0"], monkeypatch)
+    _input_antrean(["", "9", "0"], monkeypatch)
     assert terminal_mod.jalankan_terminal(_jalankan_palsu([])) == 0
     assert "tidak dikenal" in capsys.readouterr().out
+
+
+def test_halaman_depan_cari_langsung(tanpa_provider, monkeypatch):
+    panggilan = []
+    _input_antrean(["staff admin", "0"], monkeypatch)
+    terminal_mod.jalankan_terminal(_jalankan_palsu(panggilan))
+    assert panggilan == [[
+        "cari", "--keyword", "staff admin", "--lokasi", "Indonesia",
+        "--preset", "indonesia", "--profil", "profil/contoh-umum.yaml",
+        "--keluaran", "hasil/staff-admin.csv",
+    ]]
+
+
+def test_halaman_depan_tampilkan_status_provider(tanpa_provider, monkeypatch, capsys):
+    monkeypatch.setenv("KERJACOY_LLM_API_KEY", "kunci-x")
+    monkeypatch.setenv("KERJACOY_LLM_MODEL", "model-x")
+    _input_antrean(["0"], monkeypatch)
+    terminal_mod.jalankan_terminal(_jalankan_palsu([]))
+    assert "model-x" in capsys.readouterr().out
+
+
+def test_halaman_depan_tanpa_provider(tanpa_provider, monkeypatch, capsys):
+    for var in ("KERJACOY_LLM_API_KEY", "CARIKERJA_LLM_API_KEY", "CARILOKER_LLM_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    _input_antrean(["0"], monkeypatch)
+    terminal_mod.jalankan_terminal(_jalankan_palsu([]))
+    assert "belum ada" in capsys.readouterr().out
 
 
 def test_menu_cari_membangun_argumen(tanpa_provider, monkeypatch):

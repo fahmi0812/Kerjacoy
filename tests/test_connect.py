@@ -75,6 +75,19 @@ def test_preset_indonesia_tidak_berubah():
     assert negara == "Indonesia"
 
 
+def test_update_tanpa_installer(tmp_path, monkeypatch):
+    monkeypatch.setenv("KERJACOY_HOME", str(tmp_path))
+    args = argparse.Namespace()
+    kode = cli_mod.cmd_update(args)
+    assert kode == 1
+
+
+def test_direktori_instal_terdeteksi(tmp_path, monkeypatch):
+    (tmp_path / "src" / ".git").mkdir(parents=True)
+    monkeypatch.setenv("KERJACOY_HOME", str(tmp_path))
+    assert cli_mod._direktori_instal() == tmp_path / "src"
+
+
 def test_config_dir_windows(monkeypatch):
     from loker_plus import setup as setup_mod
     monkeypatch.setattr(setup_mod, "_is_windows", lambda: True)

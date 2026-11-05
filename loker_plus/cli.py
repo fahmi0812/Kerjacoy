@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import getpass
 import os
+import subprocess
 import sys
+from pathlib import Path
 
 import pandas as pd
 
@@ -198,6 +200,36 @@ def cmd_provider(args) -> int:
     return 0
 
 
+def _direktori_instal() -> Path | None:
+    """Direktori sumber instalasi (~/.kerjacoy/src) bila terpasang lewat installer."""
+    home = os.environ.get("KERJACOY_HOME") or str(Path.home() / ".kerjacoy")
+    src = Path(home) / "src"
+    return src if (src / ".git").is_dir() else None
+
+
+def cmd_update(args) -> int:
+    """Perbarui Kerjacoy dari repo (ala `0dayexploit update`)."""
+    src = _direktori_instal()
+    if src is None:
+        print("Kerjacoy tidak terpasang lewat installer (tidak ada ~/.kerjacoy/src).",
+              file=sys.stderr)
+        print("Perbarui manual: git pull di folder repo, lalu pip install -e .",
+              file=sys.stderr)
+        return 1
+    print(f"Memperbarui dari {src} ...")
+    tarik = subprocess.run(["git", "-C", str(src), "pull", "--ff-only", "origin", "main"])
+    if tarik.returncode != 0:
+        print("Error: git pull gagal — selesaikan konflik dulu, lalu ulangi.",
+              file=sys.stderr)
+        return 1
+    pasang = subprocess.run([sys.executable, "-m", "pip", "install", "-e", str(src)])
+    if pasang.returncode != 0:
+        print("Error: pip install gagal.", file=sys.stderr)
+        return 1
+    print("Kerjacoy sudah versi terbaru.")
+    return 0
+
+
 def cmd_connect(args) -> int:
     """Tambah provider LLM (ala `0dayexploit connect`).
 
@@ -318,6 +350,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Nama environment variable berisi API key (disarankan)")
     cn.add_argument("--list", action="store_true", help="Lihat provider yang tersimpan")
     cn.set_defaults(func=cmd_connect)
+
+    up = sub.add_parser("update", help="Perbarui Kerjacoy ke versi terbaru (bila terpasang lewat installer)")
+    up.set_defaults(func=cmd_update)
     return p
 
 
@@ -332,7 +367,7 @@ def main(argv=None) -> int:
             return jalankan_terminal()
         tampilkan_banner()
         print("Perintah: cari | nilai | tambah | tandai | tailor | laporan | "
-              "cek-llm | setup | provider | connect")
+              "cek-llm | setup | provider | connect | update")
         print("Contoh: kerjacoy cari --keyword \"staff admin\" --preset indonesia "
               "--profil profil/contoh-admin.yaml --keluaran hasil/staff-admin.csv")
         print("Bantuan lengkap: kerjacoy --help")

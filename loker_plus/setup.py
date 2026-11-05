@@ -100,8 +100,10 @@ def _tanya(prompt: str, default: str = "") -> str:
 
 def jalankan_wizard() -> dict:
     """Wizard interaktif pertama kali. Kembalikan pengaturan yang disimpan."""
-    print("Belum ada provider LLM yang dikonfigurasi.")
+    print("Tambah provider")
+    print("─" * 40)
     print("Isi sekali saja — disimpan lokal di komputer kamu, tidak dikirim ke mana pun.")
+    print("Tipe: openai (endpoint yang kompatibel dengan OpenAI).")
     print()
     nama = _tanya("Nama provider", "kerjacoy-llm")
     base_url = _tanya("Base URL endpoint (harus berakhiran /v1)", DEFAULT_BASE_URL)
@@ -115,6 +117,7 @@ def jalankan_wizard() -> dict:
     print()
     print(f"Tersimpan di {direktori} (key hanya bisa dibaca kamu).")
     print(f"Provider '{nama}' siap — model {model}.")
+    print("Enter simpan · Ctrl+C batal")
     return muat_pengaturan()
 
 
