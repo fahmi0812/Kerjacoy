@@ -30,18 +30,30 @@ def _is_windows() -> bool:
     return os.name == "nt"
 
 
-def config_dir() -> Path:
-    """Direktori config, lintas platform.
+def direktori_home() -> Path:
+    """Home Kerjacoy sendiri (ala ~/.0dayexploit): semua milik Kerjacoy di sini.
 
-    Windows: %APPDATA%/kerjacoy. Linux/macOS: $XDG_CONFIG_HOME/kerjacoy
-    atau ~/.config/kerjacoy.
+    $KERJACOY_HOME bila diisi; kalau tidak, ~/.kerjacoy (Linux/macOS) atau
+    %USERPROFILE%\\.kerjacoy (Windows).
     """
+    if os.environ.get("KERJACOY_HOME"):
+        return Path(os.environ["KERJACOY_HOME"])
+    return Path.home() / ".kerjacoy"
+
+
+def _direktori_config_lama() -> Path:
+    """Lokasi config lama (v1.1.0–v1.2.0): XDG/APPDATA. Dipakai untuk migrasi."""
     if _is_windows():
         dasar = Path(os.environ.get("APPDATA") or (Path.home() / "AppData" / "Roaming"))
     else:
         xdg = os.environ.get("XDG_CONFIG_HOME")
         dasar = Path(xdg) if xdg else Path.home() / ".config"
     return dasar / CONFIG_DIRNAME
+
+
+def config_dir() -> Path:
+    """Direktori config: $KERJACOY_HOME/config (default ~/.kerjacoy/config)."""
+    return direktori_home() / "config"
 
 
 def _baca_json(path: Path) -> dict:
@@ -63,14 +75,53 @@ def _tulis_json(path: Path, data: dict, rahasia: bool = False) -> None:
             pass
 
 
+def _migrasi_dari_lokasi_lama() -> None:
+    """Pindahkan config lama (XDG/APPDATA) ke home baru, sekali saja.
+
+    Bila config baru belum ada tapi lokasi lama punya file, salin keduanya.
+    Lokasi lama dibiarkan (tidak dihapus) supaya tidak ada data yang hilang.
+    """
+    baru = config_dir()
+    if (baru / CONFIG_FILE).exists():
+        return
+    lama = _direktori_config_lama()
+    if lama == baru or not (lama / CONFIG_FILE).exists():
+        return
+    try:
+        baru.mkdir(parents=True, exist_ok=True)
+        for nama in (CONFIG_FILE, CREDENTIALS_FILE):
+            sumber = lama / nama
+            if sumber.exists():
+                (baru / nama).write_bytes(sumber.read_bytes())
+                if nama == CREDENTIALS_FILE:
+                    try:
+                        os.chmod(baru / nama, 0o600)
+                    except (OSError, NotImplementedError):
+                        pass
+    except OSError:
+        pass
+
+
 def muat_pengaturan() -> dict:
     """Gabungkan config file + credentials file. Kembalikan dict kosong bila belum ada."""
+    _migrasi_dari_lokasi_lama()
     cfg = _baca_json(config_dir() / CONFIG_FILE)
     kred = _baca_json(config_dir() / CREDENTIALS_FILE)
     gabung = dict(cfg)
     if kred.get("api_key"):
         gabung["api_key"] = kred["api_key"]
     return gabung
+
+
+def hapus_pengaturan() -> bool:
+    """Hapus provider tersimpan. Kembalikan True bila ada yang dihapus."""
+    dihapus = False
+    for nama in (CONFIG_FILE, CREDENTIALS_FILE):
+        path = config_dir() / nama
+        if path.exists():
+            path.unlink()
+            dihapus = True
+    return dihapus
 
 
 def simpan_pengaturan(nama: str, base_url: str, model: str, api_key: str) -> Path:

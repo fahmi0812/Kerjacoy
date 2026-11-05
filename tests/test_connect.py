@@ -20,7 +20,8 @@ def _args(**kwargs):
 
 @pytest.fixture
 def home_sementara(tmp_path, monkeypatch):
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setenv("KERJACOY_HOME", str(tmp_path))
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     for var in ("KERJACOY_LLM_BASE_URL", "KERJACOY_LLM_API_KEY", "KERJACOY_LLM_MODEL",
                 "CARIKERJA_LLM_BASE_URL", "CARIKERJA_LLM_API_KEY", "CARIKERJA_LLM_MODEL",
                 "CARILOKER_LLM_BASE_URL", "CARILOKER_LLM_API_KEY", "CARILOKER_LLM_MODEL"):
@@ -91,7 +92,6 @@ def test_direktori_instal_terdeteksi(tmp_path, monkeypatch):
 def test_config_dir_windows(monkeypatch):
     from loker_plus import setup as setup_mod
     monkeypatch.setattr(setup_mod, "_is_windows", lambda: True)
-    monkeypatch.setenv("APPDATA", r"C:\Users\Tes\AppData\Roaming")
+    monkeypatch.delenv("KERJACOY_HOME", raising=False)
     hasil = str(setup_mod.config_dir())
-    assert hasil.endswith("kerjacoy")
-    assert "AppData" in hasil
+    assert hasil.endswith(".kerjacoy/config")

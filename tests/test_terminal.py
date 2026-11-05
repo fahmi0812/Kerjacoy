@@ -8,9 +8,10 @@ from loker_plus import terminal as terminal_mod
 
 
 @pytest.fixture
-def tanpa_provider(monkeypatch):
+def tanpa_provider(monkeypatch, tmp_path):
+    monkeypatch.setenv("KERJACOY_HOME", str(tmp_path))
     monkeypatch.setattr(terminal_mod, "provider_dikonfigurasi", lambda: True)
-    monkeypatch.setattr(terminal_mod, "jalankan_wizard", lambda: None)
+    monkeypatch.setattr(terminal_mod, "jalankan_layar", lambda: None)
 
 
 def _jalankan_palsu(panggilan):

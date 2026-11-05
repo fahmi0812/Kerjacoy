@@ -1,0 +1,14 @@
+// Kerjacoy — config dasar (OPENCODE_CONFIG_DIR). Agent & izin = bawaan OpenCode.
+// Provider custom dan timeout ditambahkan wrapper lewat OPENCODE_CONFIG_CONTENT; key hanya lewat env.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "update": "disable",
+  "providers": {
+    "9router": {
+      "name": "9router",
+      "package": "aisdk:@ai-sdk/openai-compatible",
+      "settings": { "baseURL": "{env:KC_9ROUTER_URL}", "apiKey": "{env:KC_KEY_9ROUTER}" },
+      "models": { "ag/gemini-3.8-flash-high": { "name": "gemini-3.8-flash-high (9router)" } }
+    }
+  }
+}

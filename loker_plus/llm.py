@@ -153,6 +153,31 @@ def cek_koneksi(cfg: KonfigurasiLLM | None = None) -> tuple[bool, str]:
     return True, f"Terhubung ke {cfg.base_url} (model: {cfg.model}). Balasan: {balasan[:80]}"
 
 
+def daftar_model(base_url: str, api_key: str, timeout: int = 15) -> list[str]:
+    """Ambil daftar model dari {base_url}/models (dipakai layar provider).
+
+    Kembalikan daftar id model (bisa kosong bila endpoint tidak menyediakannya).
+    """
+    req = urllib.request.Request(
+        f"{base_url.rstrip('/')}/models",
+        headers={"Authorization": f"Bearer {api_key}"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise LLMError(f"endpoint menolak permintaan (HTTP {e.code})") from e
+    except urllib.error.URLError as e:
+        raise LLMError(f"tidak bisa menghubungi endpoint {base_url}: {e.reason}") from e
+    except (json.JSONDecodeError, TimeoutError) as e:
+        raise LLMError(f"balasan endpoint tidak bisa dibaca: {e}") from e
+    try:
+        return [m["id"] for m in data["data"] if m.get("id")]
+    except (KeyError, TypeError):
+        return []
+
+
 def _ambil_json(teks: str) -> dict:
     """Ambil objek JSON pertama dari teks balasan (tahan terhadap ```json fence)."""
     bersih = re.sub(r"```(?:json)?\s*", "", teks).replace("```", "")

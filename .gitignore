@@ -7,3 +7,11 @@ build/
 dist/
 hasil/
 venv/
+node_modules/
+*.log
+*.tgz
+.DS_Store
+# Aset biner hasil generate (WebP/PNG) — versi SVG-nya yang masuk repo
+# (snapshot-push GitHub hanya menerima file teks UTF-8).
+assets/brand/*.webp
+docs/*.png

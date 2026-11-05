@@ -15,9 +15,10 @@ from pathlib import Path
 
 from .banner import BANNER
 from .llm import DEFAULT_BASE_URL, DEFAULT_MODEL, ENV_API_KEY, ENV_BASE_URL, ENV_MODEL, ambil_env
-from .setup import jalankan_wizard, muat_pengaturan, provider_dikonfigurasi, tampilkan_provider
+from .provider_screen import jalankan_layar
+from .setup import muat_pengaturan, provider_dikonfigurasi, tampilkan_provider
 
-VERSI = "1.2.0"
+VERSI = "2.0.0"
 
 HINTS = "1 cari · 2 laporan · 3 nilai · 4 tailor · 5 lacak · 6 provider · 7 cek LLM · 0 keluar"
 
@@ -91,10 +92,10 @@ def jalankan_terminal(jalankan=None) -> int:
 
     tampilkan_halaman_depan()
     if not provider_dikonfigurasi():
-        jawab = input("Belum ada provider LLM. Setup sekarang? [Y/n]: ").strip().lower()
+        jawab = input("Belum ada provider LLM. Buka layar provider sekarang? [Y/n]: ").strip().lower()
         if jawab in ("", "y", "ya"):
             try:
-                jalankan_wizard()
+                jalankan_layar()
             except (EOFError, KeyboardInterrupt):
                 print("\nSetup dibatalkan.")
             tampilkan_halaman_depan()
@@ -190,7 +191,7 @@ def _jalankan_menu(pilih: str, jalankan) -> None:
             return
         if sub == "1":
             try:
-                jalankan_wizard()
+                jalankan_layar()
             except (EOFError, KeyboardInterrupt):
                 print("\nSetup dibatalkan.")
         elif sub == "2":

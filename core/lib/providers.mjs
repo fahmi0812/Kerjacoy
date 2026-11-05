@@ -1,0 +1,150 @@
+/**
+ * Provider custom Kerjacoy (OpenAI-compatible / Anthropic-compatible), disimpan di KERJACOY_HOME — bukan di proyek.
+ *  - $KERJACOY_HOME/providers.json  (0600): {providers:{<nama>:{type, baseURL, models[], updated}}} — tanpa rahasia
+ *  - $KERJACOY_HOME/credentials.json (0600): {<nama>: "<api key>"} — tidak pernah dicetak/di-log
+ *  - override env: KC_KEY_<NAMA> (huruf besar, non-alnum → _); untuk nama "9router" juga NINEROUTER_API_KEY
+ * Model dideteksi via GET {base}/models (OpenAI: Bearer; Anthropic: x-api-key + anthropic-version, /v1/models).
+ */
+import fs from "node:fs";
+import path from "node:path";
+import readline from "node:readline";
+
+export const NAME_RE = /^[a-z0-9][a-z0-9-]{0,31}$/;
+const envName = (n) => `KC_KEY_${n.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
+const readJ = (f) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return {}; } };
+const writeJ = (f, o) => { fs.mkdirSync(path.dirname(f), { recursive: true, mode: 0o700 }); fs.writeFileSync(f + ".tmp", JSON.stringify(o, null, 2) + "\n", { mode: 0o600 }); fs.renameSync(f + ".tmp", f); fs.chmodSync(f, 0o600); };
+export const files = (home) => ({ prov: path.join(home, "providers.json"), cred: path.join(home, "credentials.json") });
+export function load(home) { return readJ(files(home).prov).providers || {}; }
+function keyFor(home, name, env = process.env) {
+  return env[envName(name)] || (name === "9router" ? env.NINEROUTER_API_KEY : undefined) || readJ(files(home).cred)[name];
+}
+
+/** GET daftar model; mengembalikan id terurut. Error → throw (pesan tanpa key). */
+export async function detectModels(type, base, key, { timeoutMs = 15000 } = {}) {
+  const b = base.replace(/\/+$/, "");
+  const url0 = type === "anthropic" ? (/\/v1$/.test(b) ? `${b}/models` : `${b}/v1/models`) : `${b}/models`;
+  const headers = type === "anthropic" ? { "x-api-key": key, "anthropic-version": "2023-06-01" } : { authorization: `Bearer ${key}` };
+  const ids = []; let url = url0;
+  for (let page = 0; page < 20 && url; page++) {
+    const r = await fetch(url, { headers: { accept: "application/json", ...headers }, signal: AbortSignal.timeout(timeoutMs) });
+    if (!r.ok) throw new Error(`GET ${url0} → HTTP ${r.status}`);
+    const j = await r.json();
+    for (const m of j.data || j.models || []) if (m && (m.id || m.name)) ids.push(String(m.id || m.name));
+    url = type === "anthropic" && j.has_more && j.last_id ? `${url0}?after_id=${encodeURIComponent(j.last_id)}` : null;
+  }
+  return [...new Set(ids)].sort();
+}
+
+export async function add(home, { name, type, baseURL, key }) {
+  if (!NAME_RE.test(name || "")) throw new Error("nama provider: huruf kecil/angka/-, maks 32");
+  if (!["openai", "anthropic"].includes(type)) throw new Error("tipe: openai | anthropic");
+  if (!/^https?:\/\//.test(baseURL || "")) throw new Error("base URL harus http(s)://");
+  if (!key) throw new Error("API key kosong");
+  const models = await detectModels(type, baseURL, key);
+  if (!models.length) throw new Error("server tidak mengembalikan model");
+  const F = files(home), all = readJ(F.prov); all.providers ||= {};
+  all.providers[name] = { type, baseURL: baseURL.replace(/\/+$/, ""), models, updated: new Date().toISOString() };
+  const cred = readJ(F.cred); cred[name] = key; writeJ(F.cred, cred); writeJ(F.prov, all);
+  return models;
+}
+export function remove(home, name) {
+  const F = files(home), all = readJ(F.prov); if (!all.providers?.[name]) return false;
+  delete all.providers[name]; writeJ(F.prov, all);
+  const cred = readJ(F.cred); delete cred[name]; writeJ(F.cred, cred); return true;
+}
+export async function refresh(home, only) {
+  const F = files(home), all = readJ(F.prov); const out = {};
+  for (const [n, p] of Object.entries(all.providers || {})) {
+    if (only && n !== only) continue;
+    try { p.models = await detectModels(p.type, p.baseURL, keyFor(home, n)); p.updated = new Date().toISOString(); out[n] = p.models.length; }
+    catch (e) { out[n] = `gagal: ${e.message}`; }
+  }
+  writeJ(F.prov, all); return out;
+}
+
+/** Timeout HTTP provider untuk engine (ms, bilangan bulat positif). Nilai env tidak valid → default. */
+export const TIMEOUT_DEFAULTS = { headerTimeout: 300000, chunkTimeout: 900000, timeout: 3600000 };
+export function providerTimeouts(env = process.env) {
+  const n = (v, d) => { const x = Number(v); return Number.isSafeInteger(x) && x > 0 ? x : d; };
+  return { headerTimeout: n(env.KC_HEADER_TIMEOUT_MS, TIMEOUT_DEFAULTS.headerTimeout),
+    chunkTimeout: n(env.KC_IDLE_TIMEOUT_MS, TIMEOUT_DEFAULTS.chunkTimeout),
+    timeout: n(env.KC_TOTAL_TIMEOUT_MS, TIMEOUT_DEFAULTS.timeout) };
+}
+
+/** Env KERJACOY_LLM_* untuk mesin loker (dipakai agen saat memanggil `loker --llm`).
+ *  Provider = dari model (mis. "stub/model-kamu") atau provider pertama.
+ *  Env yang sudah diisi pengguna menang (tidak ditimpa). */
+export function lokerEnv(home, env = process.env, model = null) {
+  if (env.KERJACOY_LLM_API_KEY && env.KERJACOY_LLM_BASE_URL && env.KERJACOY_LLM_MODEL) return {};
+  const ps = load(home);
+  const entries = Object.entries(ps);
+  if (!entries.length) return {};
+  let nama = null, modelId = null;
+  if (model && model.includes("/")) {
+    const [n, ...rest] = model.split("/");
+    if (ps[n]) { nama = n; modelId = rest.join("/"); }
+  }
+  if (!nama) { [nama] = entries[0]; modelId = ps[nama].models[0]; }
+  const p = ps[nama];
+  const key = keyFor(home, nama, env);
+  if (!key || !p.baseURL) return {};
+  return {
+    ...(env.KERJACOY_LLM_BASE_URL ? {} : { KERJACOY_LLM_BASE_URL: p.baseURL }),
+    ...(env.KERJACOY_LLM_API_KEY ? {} : { KERJACOY_LLM_API_KEY: key }),
+    ...(env.KERJACOY_LLM_MODEL ? {} : { KERJACOY_LLM_MODEL: modelId || p.models[0] }),
+  };
+}
+
+/** Fragmen config OpenCode + env berisi key (key hanya lewat env proses engine, config memakai {env:...}). */
+export function opencodeFragment(home, env = process.env) {
+  const providers = {}, penv = {};
+  for (const [n, p] of Object.entries(load(home))) {
+    const key = keyFor(home, n, env); if (!key) continue;
+    const ev = envName(n); penv[ev] = key;
+    providers[n] = { name: n, package: p.type === "anthropic" ? "aisdk:@ai-sdk/anthropic" : "aisdk:@ai-sdk/openai-compatible",
+      settings: { baseURL: p.type === "anthropic" && !/\/v1$/.test(p.baseURL) ? `${p.baseURL}/v1` : p.baseURL, apiKey: `{env:${ev}}` },
+      models: Object.fromEntries(p.models.map((m) => [m, { name: `${m} (${n})` }])) };
+  }
+  // 9router: wrapper selalu men-set KEDUA nama (config dasar memakai KC_KEY_9ROUTER; skrip lama memakai NINEROUTER_API_KEY)
+  const k9 = penv.KC_KEY_9ROUTER || env.KC_KEY_9ROUTER || env.NINEROUTER_API_KEY || readJ(files(home).cred)["9router"];
+  if (k9) { penv.KC_KEY_9ROUTER = k9; penv.NINEROUTER_API_KEY = k9; }
+  return { providers, env: penv };
+}
+
+// ---------- CLI ----------
+function ask(rl, q) { return new Promise((r) => rl.question(q, r)); }
+async function askHidden(q) { const { askMasked } = await import("./provider-ui.mjs"); return askMasked(q); }
+
+export async function cli({ argv, home, sub, log = console.log, err = (m) => process.stderr.write(m + "\n") }) {
+  const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; }, flag = (f) => argv.includes(f);
+  const list = () => { const ps = load(home); if (!Object.keys(ps).length) { log("belum ada provider custom. Tambah: kerjacoy connect"); return; }
+    for (const [n, p] of Object.entries(ps)) log(`${n}\t${p.type}\t${p.baseURL}\t${p.models.length} model\tkey:${keyFor(home, n) ? "ada" : "TIDAK ADA"}`); };
+  if (sub === "models") {
+    if (flag("--refresh")) { const r = await refresh(home, val("--refresh")?.startsWith("-") ? undefined : val("--refresh")); for (const [n, v] of Object.entries(r)) log(`${n}: ${v}${typeof v === "number" ? " model" : ""}`); return Object.values(r).some((v) => typeof v !== "number") ? 1 : 0; }
+    for (const [n, p] of Object.entries(load(home))) for (const m of p.models) log(`${n}/${m}`); return 0;
+  }
+  if (flag("--list")) { list(); return 0; }
+  if (flag("--remove")) { const n = val("--remove"); const ok = remove(home, n); (ok ? log : err)(ok ? `provider '${n}' dihapus (config + key)` : `provider '${n}' tidak ada`); return ok ? 0 : 1; }
+  let type = val("--type"), name = val("--name"), baseURL = val("--base-url"), key;
+  if (val("--key-env")) key = process.env[val("--key-env")];
+  if (flag("--key-stdin")) key = fs.readFileSync(0, "utf8").trim();
+  argv = argv.filter((a) => a !== "--text");
+  const interactive = !(type && name && baseURL && key);
+  if (interactive) {
+    if (!process.stdin.isTTY) { err("connect: non-interaktif butuh --type openai|anthropic --name <n> --base-url <url> (--key-env VAR | --key-stdin)"); return 2; }
+    const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
+    err("Tambah provider Kerjacoy\n  1) Custom OpenAI-compatible (9router, OpenRouter, vLLM, LM Studio, Ollama /v1, …)\n  2) Custom Anthropic-compatible\n  (menu layar penuh: kerjacoy connect / kerjacoy provider · provider bawaan OpenCode: di TUI ketik /connect)");
+    if (!type) { const t = (await ask(rl, "Pilih [1/2]: ")).trim(); type = t === "2" ? "anthropic" : "openai"; }
+    if (!name) name = (await ask(rl, "Nama (mis. 9router): ")).trim().toLowerCase();
+    if (!baseURL) baseURL = (await ask(rl, type === "anthropic" ? "Base URL (mis. https://api.example.com): " : "Base URL (mis. http://127.0.0.1:20128/v1): ")).trim();
+    rl.close();
+    if (!key) key = (await askHidden("API key (tampil sebagai •): ")).trim();
+  }
+  try {
+    const models = await add(home, { name, type, baseURL, key });
+    log(`OK: provider '${name}' (${type}) — ${models.length} model terdeteksi. Contoh: ${models.slice(0, 5).map((m) => `${name}/${m}`).join(", ")}${models.length > 5 ? ", …" : ""}`);
+    const pref = models.includes("ag/gemini-3.8-flash-high") ? "ag/gemini-3.8-flash-high" : models[0];
+    log(`Pilih di TUI lewat /model, atau: kerjacoy run -m ${name}/${pref} "…"`);
+    return 0;
+  } catch (e) { err(`connect gagal: ${e.message}`); return 1; }
+}

@@ -27,6 +27,7 @@ from .llm import (
     skor_llm,
 )
 from .profil import muat_profil
+from .provider_screen import jalankan_layar
 from .scrape import PRESET, cari_lowongan
 from .setup import (
     jalankan_wizard,
@@ -185,6 +186,11 @@ def cmd_cek_llm(args) -> int:
 
 
 def cmd_setup(args) -> int:
+    if sys.stdin.isatty():
+        tampilkan_banner()
+        jalankan_layar()
+        print("\nTes koneksi:")
+        return cmd_cek_llm(args)
     try:
         tampilkan_banner()
         jalankan_wizard()
@@ -196,6 +202,9 @@ def cmd_setup(args) -> int:
 
 
 def cmd_provider(args) -> int:
+    if sys.stdin.isatty():
+        jalankan_layar()
+        return 0
     tampilkan_provider()
     return 0
 

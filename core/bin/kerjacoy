@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# kerjacoy launcher (Linux/macOS): node + engine terpin dari KERJACOY_HOME (~/.kerjacoy), lalu wrapper Node.
+set -euo pipefail
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"; DIR="$(dirname "$SELF")"
+KERJACOY_HOME="${KERJACOY_HOME:-$HOME/.kerjacoy}"; export KERJACOY_HOME
+[ -f "$KERJACOY_HOME/env.sh" ] && . "$KERJACOY_HOME/env.sh"
+exec node --no-warnings "$DIR/kerjacoy.mjs" "$@"

@@ -13,15 +13,40 @@ from loker_plus.llm import muat_konfigurasi
 
 @pytest.fixture
 def home_sementara(tmp_path, monkeypatch):
-    """Arahkan XDG_CONFIG_HOME ke direktori sementara + bersihkan env LLM."""
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    """Arahkan KERJACOY_HOME ke direktori sementara + bersihkan env LLM."""
+    monkeypatch.setenv("KERJACOY_HOME", str(tmp_path / ".kerjacoy"))
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     for var in ("KERJACOY_LLM_BASE_URL", "KERJACOY_LLM_API_KEY", "KERJACOY_LLM_MODEL"):
         monkeypatch.delenv(var, raising=False)
     return tmp_path
 
 
-def test_config_dir_memakai_xdg(home_sementara):
-    assert str(setup_mod.config_dir()).endswith("kerjacoy")
+def test_config_dir_di_home_sendiri(home_sementara):
+    assert str(setup_mod.config_dir()).endswith(".kerjacoy/config")
+
+
+def test_migrasi_dari_lokasi_lama(tmp_path, monkeypatch):
+    """Config lama (XDG) ditemukan dan disalin ke home baru."""
+    lama = tmp_path / "lama"
+    baru = tmp_path / "baru"
+    monkeypatch.setenv("KERJACOY_HOME", str(baru))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(lama))
+    (lama / "kerjacoy").mkdir(parents=True)
+    (lama / "kerjacoy" / "config.json").write_text(
+        '{"provider": "lama", "base_url": "http://127.0.0.1:9/v1", "model": "model-lama"}')
+    (lama / "kerjacoy" / "credentials.json").write_text('{"api_key": "kunci-lama"}')
+    pengaturan = setup_mod.muat_pengaturan()
+    assert pengaturan["provider"] == "lama"
+    assert pengaturan["api_key"] == "kunci-lama"
+    assert (baru / "config" / "config.json").exists()
+    assert (baru / "config" / "credentials.json").exists()
+
+
+def test_hapus_pengaturan(home_sementara):
+    setup_mod.simpan_pengaturan("tes", "http://x/v1", "m", "kunci-tes")
+    assert setup_mod.hapus_pengaturan() is True
+    assert setup_mod.muat_pengaturan() == {}
+    assert setup_mod.hapus_pengaturan() is False
 
 
 def test_simpan_dan_muat(home_sementara):
