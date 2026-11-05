@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kerjacoy"
+version = "1.1.0"
+description = "Cari kerja lintas bidang dari banyak job board, nilai kecocokan, lacak lamaran, siapkan bahan lamaran — termasuk lowongan Indonesia."
+requires-python = ">=3.10"
+dependencies = [
+    "python-jobspy",
+    "pyyaml",
+    "pandas",
+]
+readme = "README.md"
+license = { text = "MIT" }
+
+[project.scripts]
+loker = "loker_plus.cli:main"
+carikerja = "loker_plus.cli:main"
+kerjacoy = "loker_plus.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["loker_plus*"]

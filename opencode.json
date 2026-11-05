@@ -1,0 +1,35 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Contoh konfigurasi OpenCode untuk Kerjacoy.
+  //
+  // TIDAK ADA key atau URL asli di file ini. Semuanya dibaca dari
+  // environment variable saat OpenCode dijalankan:
+  //   export KERJACOY_LLM_API_KEY="kunci-kamu"
+  //   export KERJACOY_LLM_BASE_URL="https://endpoint-kamu/v1"
+  //   export KERJACOY_LLM_MODEL="nama-model-kamu"
+  //
+  // Bila memakai OpenAI resmi, KERJACOY_LLM_BASE_URL boleh dikosongkan
+  // (default di bawah ini) dan KERJACOY_LLM_MODEL diisi model OpenAI.
+  // Bila memakai endpoint lain yang kompatibel dengan OpenAI (server
+  // sendiri, gateway, dsb.), isi ketiga variable di atas.
+  //
+  // Jalankan OpenCode dari root repo ini supaya skill `kerjacoy`,
+  // agent `pemburu-kerja`, dan command `/cari-kerja` langsung dikenali.
+  // Model dipakai dengan:  opencode run --model kerjacoy-llm/model-kamu "..."
+  "provider": {
+    "kerjacoy-llm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Kerjacoy LLM",
+      "options": {
+        "baseURL": "{env:KERJACOY_LLM_BASE_URL}",
+        "apiKey": "{env:KERJACOY_LLM_API_KEY}"
+      },
+      "models": {
+        // Ganti "model-kamu" dengan ID model yang disediakan endpoint kamu.
+        "model-kamu": {
+          "name": "Model kamu"
+        }
+      }
+    }
+  }
+}
