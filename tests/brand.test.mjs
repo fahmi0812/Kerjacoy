@@ -62,6 +62,10 @@ test("installer: sintaks bash, engine upstream, launcher kerjacoy + alias kc + l
   assert.ok(sh.includes("OC_VERSION=2.2.4") && sh.includes("anomalyco/opencode/releases/download/v$OC_VERSION"));
   assert.ok(/for name in kerjacoy kc/.test(sh) && sh.includes("KC-LAUNCHER") && sh.includes("command -v kc"));
   assert.ok(sh.includes("mesin loker") && sh.includes("venv") && sh.includes("python-jobspy==1.4.1"));
+  // GitHub tidak menyimpan bit executable — installer wajib memulihkannya,
+  // kalau tidak launcher ~/.local/bin/kerjacoy gagal "Permission denied".
+  assert.ok(sh.includes('chmod 0755 "$PROJECT/core/bin/kerjacoy"'), "install.sh chmod core/bin/*");
+  assert.ok(read("core/lib/update.mjs").includes("fs.chmodSync(p, 0o755)"), "update.mjs chmod core/bin/* setelah swap");
   assert.ok(!/codebase-memory|skill-index|uvx|bwrap/.test(sh));
   const pkg = JSON.parse(read("package.json"));
   assert.equal(pkg.bin["kerjacoy"], "core/bin/cli.mjs"); assert.equal(pkg.bin["kc"], "core/bin/cli.mjs");

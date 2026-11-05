@@ -51,6 +51,9 @@ if [ "$UNINSTALL" = 1 ]; then
   exit 0
 fi
 say "Kerjacoy $KC_VERSION · $OS-$ARCH · KERJACOY_HOME=$KERJACOY_HOME"
+# File di repo (GitHub) tidak menyimpan bit executable — pulihkan di sini.
+# Tanpa ini, launcher ~/.local/bin/kerjacoy gagal: "Permission denied".
+if [ "$DRY" = 0 ]; then chmod 0755 "$PROJECT/core/bin/kerjacoy" "$PROJECT/core/bin/kerjacoy.mjs" "$PROJECT/core/bin/cli.mjs" "$PROJECT/core/bin/postinstall.mjs" 2>/dev/null || true; fi
 command -v curl >/dev/null || die "butuh curl"; command -v tar >/dev/null || die "butuh tar"
 sha256() { if command -v sha256sum >/dev/null; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT

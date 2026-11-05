@@ -69,6 +69,8 @@ async function confirm(q, out = process.stderr) {
 
 /** Setelah update: hentikan service latar lama milik KERJACOY_HOME (diam-diam; gagal tidak fatal). */
 async function afterUpdate({ repo, home, log }) {
+  // File di repo (GitHub) tidak menyimpan bit executable — pulihkan setelah swap.
+  try { for (const f of ["kerjacoy", "kerjacoy.mjs", "cli.mjs", "postinstall.mjs"]) { const p = path.join(repo, "core", "bin", f); if (fs.existsSync(p)) fs.chmodSync(p, 0o755); } log("bin executable dipulihkan"); } catch (e) { log(`chmod bin: ${e.message}`); }
   try { const uf = path.join(repo, "core", "lib", "userfiles.mjs"); // AGENTS.md/skills: hanya dibuat bila belum ada
     if (fs.existsSync(uf)) { const U = await import(pathToFileURL(uf).href + "?t=" + Date.now()); log(`userfiles: ${JSON.stringify(U.seedUserFiles(path.join(home, "config")))}`); } } catch (e) { log(`userfiles: ${e.message}`); }
   try { const sf = path.join(repo, "core", "lib", "service-ctl.mjs");
