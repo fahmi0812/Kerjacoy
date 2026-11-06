@@ -9,23 +9,25 @@ import * as EN from "../core/lib/engine.mjs";
 const ROOT = path.resolve(new URL("..", import.meta.url).pathname);
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
-test("logo: kaca pembesar hijau limau, wordmark Kerjacoy di kanan", () => {
+test("logo: kaca pembesar emas, wordmark KERJACOY di kanan", () => {
   const lines = L.splashLines("truecolor"), plain = L.splashLines("none");
-  assert.ok(lines.join("").includes("38;2;238;232;220") && lines.join("").includes("38;2;124;255;63"));
-  assert.ok(L.MAG.some((r) => r.includes("g")) && !L.MAG.some((r) => r.includes("r")));
+  assert.ok(lines.join("").includes("38;2;212;175;55"), "emas #D4AF37");
+  assert.ok(!lines.join("").includes("38;2;124;255;63") && !lines.join("").includes("38;2;238;232;220"), "tanpa limau/bone lama");
+  assert.ok(L.MAG.some((r) => r.includes("g")) && !L.MAG.some((r) => /[^g.]/.test(r)), "kaca pembesar hanya piksel emas");
   const wordRows = plain.filter((l) => l.length > 40);
   assert.equal(wordRows.length, 3, "wordmark 3 baris di samping kaca pembesar");
   assert.ok(L.wordPixels().every((r) => r.length === L.wordPixels()[0].length));
   assert.equal(L.wordLines("none").length, 3);
-  assert.equal(L.WORD, "Kerjacoy");
+  assert.equal(L.WORD, "KERJACOY");
 });
 
 test("patch engine: hanya logo diganti (logo.ts + component/logo.tsx), data kaca pembesar sama dengan core/lib/logo.mjs", () => {
   const p = read("engine/patches/logo.patch");
   const files = [...p.matchAll(/^diff --git a\/(\S+)/gm)].map((m) => m[1]).sort();
   assert.deepEqual(files, ["packages/tui/src/component/logo.tsx", "packages/tui/src/logo.ts"]);
-  assert.ok(p.includes(JSON.stringify(L.MAG)) && p.includes(L.COLORS.w) && p.includes(L.COLORS.g));
-  assert.ok(!/hat|fedora|B2181E/.test(p));
+  assert.ok(p.includes(JSON.stringify(L.MAG)) && p.includes(L.COLORS.g));
+  assert.ok(p.includes(JSON.stringify(L.wordPixels())));
+  assert.ok(!/hat|fedora|B2181E|7CFF3F|EEE8DC/.test(p), "tanpa warna lama");
 });
 
 test("aset brand: banner + logo SVG (teks, dari data piksel yang sama)", () => {
@@ -36,11 +38,13 @@ test("aset brand: banner + logo SVG (teks, dari data piksel yang sama)", () => {
     assert.ok((s.match(/<rect/g) || []).length > 40, f);
   }
   const banner = read("assets/brand/banner.svg");
-  assert.ok(banner.includes(L.COLORS.w), "banner ada wordmark bone-white");
-  // jumlah piksel wordmark di SVG sama dengan data wordPixels()
+  // piksel emas di banner = kaca pembesar + wordmark; fade pakai emas redup
+  const gold = (s) => (s.match(new RegExp(`fill="${L.COLORS.g}"`, "g")) || []).length;
+  const magPx = L.MAG.join("").replace(/\./g, "").length;
   const wordPx = L.wordPixels().join("").replace(/\./g, "").length;
-  const wordRects = (banner.match(new RegExp(`fill="${L.COLORS.w}"`, "g")) || []).length;
-  assert.equal(wordRects, wordPx, "tiap piksel wordmark jadi satu <rect>");
+  assert.equal(gold(banner), magPx + wordPx, "tiap piksel emas jadi satu <rect>");
+  assert.ok(gold(read("assets/brand/logo.svg")) === magPx, "logo.svg hanya kaca pembesar");
+  assert.ok((banner.match(new RegExp(`fill="${L.FADE}"`, "g")) || []).length > 0, "banner ada strip fade emas redup");
 });
 
 test("engine terpin 2.2.4: upstream default, build Kerjacoy belum dirilis", async () => {

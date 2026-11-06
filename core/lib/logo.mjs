@@ -1,9 +1,12 @@
 /**
- * Logo Kerjacoy: kaca pembesar hijau limau + wordmark pixel (assets/brand),
- * digambar dengan half-block (▀ ▄ █) — 2 piksel per sel. Dipakai menu provider, updater, dan patch engine.
- * Data MAG dibangkitkan dari assets/brand/logo.webp (kaca pembesar + tas kerja).
+ * Logo Kerjacoy — konsep #1 "Gold Hunter" (dipilih Fahmi 2026-11-06):
+ * kaca pembesar piksel EMAS + wordmark piksel "KERJACOY" emas di atas hitam,
+ * digambar dengan half-block (▀ ▄ █) — 2 piksel per sel. Dipakai menu provider,
+ * updater, dan patch engine. Kaca pembesar dipertahankan — metafora "berburu" loker.
  */
-export const COLORS = { w: "#EEE8DC", g: "#7CFF3F" };
+export const COLORS = { g: "#D4AF37" };
+/** Emas redup untuk strip fade di banner (bukan wordmark). */
+export const FADE = "#8C6D1F";
 export const MAG = [".....gggggg.....", "...gg......gg...", "..g..........g..", "..g..........g..",
   ".g............g.", ".g............g.", ".g............g.", ".g............g.",
   "..g..........g..", "..g..........g..", "...gg......gg...", ".....gggggg.....",
@@ -28,10 +31,17 @@ const F = {
   r: ["....", "###.", "#..#", "#...", "#...", "...."],
   j: ["..##", "...#", "...#", "...#", "#..#", ".##."],
   c: ["....", ".##.", "#...", "#...", "#...", ".##."],
+  E: ["####", "#...", "###.", "#...", "####", "...."],
+  R: ["###.", "#..#", "###.", "#.#.", "#..#", "...."],
+  J: ["..##", "...#", "...#", "...#", "#..#", ".##."],
+  A: [".##.", "#..#", "####", "#..#", "#..#", "...."],
+  C: [".###", "#...", "#...", "#...", ".###", "...."],
+  O: [".##.", "#..#", "#..#", "#..#", ".##.", "...."],
+  Y: ["#...#", "#...#", ".#.#.", "..#..", "..#..", "....."],
 };
-export const WORD = "Kerjacoy";
-/** Bitmap wordmark (baris string, "w" = piksel, "." = kosong). */
-export function wordPixels(text = WORD, c = "w") {
+export const WORD = "KERJACOY";
+/** Bitmap wordmark (baris string, "g" = piksel emas, "." = kosong). */
+export function wordPixels(text = WORD, c = "g") {
   const rows = ["", "", "", "", "", ""];
   [...text].forEach((ch, k) => { const g = F[ch]; for (let y = 0; y < 6; y++) rows[y] += (k ? "." : "") + g[y].replace(/#/g, c); });
   return rows;

@@ -132,16 +132,16 @@ index 8c570fb..20fa88f 100644
  export const logo = {
 -  left: ["                   ", "█▀▀█ █▀▀█ █▀▀█ █▀▀▄", "█__█ █__█ █^^^ █__█", "▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀~~▀"],
 -  right: ["             ▄     ", "█▀▀▀ █▀▀█ █▀▀█ █▀▀█", "█___ █__█ █__█ █^^^", "▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"],
-+  left: ["█ ▄▀  ▄▄  ▄▄▄    ▀█  ▄▄▄  ▄▄   ▄▄  ▄  ▄","█▀▄  █▄▄█ █  ▀    █ █  █ █    █  █ ▀▄▄█","▀  ▀ ▀▄▄  ▀    ▀▄▄▀  ▀▀▀ ▀▄▄   ▀▀  ▄▄▄▀"],
++  left: ["█ ▄▀ █▀▀▀ █▀▀▄   ▀█ ▄▀▀▄ ▄▀▀▀ ▄▀▀▄ █   █","█▀▄  █▀▀  █▀█     █ █▀▀█ █    █  █  ▀▄▀","▀  ▀ ▀▀▀▀ ▀  ▀ ▀▄▄▀ ▀  ▀  ▀▀▀  ▀▀    ▀"],
 +  right: ["","",""],
 +}
 +
-+// Kerjacoy: magnifier (lime green) + pixel wordmark to the right.
-+// Pixel rows: "w" bone-white, "g" lime green, "." empty; two pixel rows per terminal row (half-blocks).
++// Kerjacoy: magnifier (gold) + pixel wordmark to the right.
++// Pixel rows: "g" gold, "." empty; two pixel rows per terminal row (half-blocks).
 +export const brand = {
-+  colors: { w: "#EEE8DC", g: "#7CFF3F" } as Record<string, string>,
++  colors: { g: "#D4AF37" } as Record<string, string>,
 +  mag: [".....gggggg.....","...gg......gg...","..g..........g..","..g..........g..",".g............g.",".g............g.",".g............g.",".g............g.","..g..........g..","..g..........g..","...gg......gg...",".....gggggg.....",".......gg.......","........gg......",".........gg.....","..........gg....","...........gg...","............gg..",".............g..","................","................","................","................","................"],
-+  word: ["w..w.............ww....................","w.w...ww..www.....w..www..ww...ww..w..w","ww...w..w.w..w....w.w..w.w....w..w.w..w","w.w..wwww.w.......w.w..w.w....w..w..www","w..w.w....w....w..w..www.w.....ww.....w","......ww........ww........ww.......www."],
++  word: ["g..g.gggg.ggg....gg..gg...ggg..gg..g...g","g.g..g....g..g....g.g..g.g....g..g.g...g","gg...ggg..ggg.....g.gggg.g....g..g..g.g.","g.g..g....g.g.....g.g..g.g....g..g...g..","g..g.gggg.g..g.g..g.g..g..ggg..gg....g..","................gg......................"],
  }
  
  export const go = {

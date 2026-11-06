@@ -108,15 +108,15 @@ test("menu provider: key tampil sebagai •, Enter simpan, Esc lewati, × hapus 
   assert.equal(s3.confirm, null);
 });
 
-test("menu provider: tampilan minimal — wordmark Kerjacoy (bone-white), latar hitam, 'N model ×', tanpa kotak", () => {
+test("menu provider: tampilan minimal — wordmark KERJACOY (emas), latar hitam, 'N model ×', tanpa kotak", () => {
   const f0 = UI.render(UI.initState({ a: { models: ["m1", "m2"] } }), 100, 30);
-  assert.ok(f0.includes("38;2;238;232;220"), "warna bone-white");
+  assert.ok(f0.includes("38;2;212;175;55"), "warna emas");
   assert.ok(f0.includes("48;2;0;0;0"));
   assert.match(f0, /a\s+2 model\s+×/);
   assert.ok(f0.includes("Tab pindah · Enter simpan · Del hapus · Esc lewati"));
   assert.ok(!/[┌┐└┘│]/.test(f0));
   const fa = UI.render(UI.initState({ a: { models: ["m"] } }), 100, 30, UI.ASCII);
-  assert.ok(fa.includes("Kerja") && /1 model\s+x/.test(fa) && !/[^\x00-\x7f]/.test(fa));
+  assert.ok(fa.includes("KERJACOY") && /1 model\s+x/.test(fa) && !/[^\x00-\x7f]/.test(fa));
   assert.equal(UI.pickGlyphs({}, "win32", 437), UI.ASCII); assert.equal(UI.pickGlyphs({ WT_SESSION: "1" }, "win32", 437), UI.UNI);
   assert.equal(UI.pickGlyphs({ KC_ASCII: "1" }, "linux"), UI.ASCII);
 });

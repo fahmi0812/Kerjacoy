@@ -1,5 +1,5 @@
 /**
- * Tampilan `kerjacoy update`: wordmark Kerjacoy (bone-white; hanya logo & glyph berwarna), satu baris status yang diperbarui di tempat
+ * Tampilan `kerjacoy update`: wordmark KERJACOY (emas; hanya logo & glyph berwarna), satu baris status yang diperbarui di tempat
  * dengan spinner, lalu satu baris hasil. Non-TTY / CI: baris polos tanpa animasi & tanpa ANSI.
  * Glyph ASCII bila konsol Windows bukan UTF-8 (sama dengan layar provider) atau KC_ASCII=1.
  */
@@ -27,7 +27,7 @@ export function createUI({ out = process.stderr, mode = uiMode(), interval = 80,
   const w = (s) => out.write(s);
   const gold = (s, h) => (mode.color ? `${fg(h)}${s}${RST}` : s);
   const dim = (s) => (mode.color ? `${DIM}${s}${RST}` : s);
-  const draw = () => { w(`${CLR}${gold(frames[i % frames.length], BRAND.lime)} ${word}${dim(ell)}`); i++; };
+  const draw = () => { w(`${CLR}${gold(frames[i % frames.length], BRAND.gold)} ${word}${dim(ell)}`); i++; };
   const clear = () => { if (timer) { clearInterval(timer); timer = null; } if (live) { w(CLR); live = false; } };
   return {
     mode,
@@ -35,7 +35,7 @@ export function createUI({ out = process.stderr, mode = uiMode(), interval = 80,
       if (logoShown) return; logoShown = true;
       if (!mode.tty) return; // CI/log: tanpa logo
       w("\n");
-      if (mode.ascii) w(`  ${gold("Kerja", BRAND.bone)}${gold("coy", BRAND.lime)}\n\n`);
+      if (mode.ascii) w(`  ${gold("KERJACOY", BRAND.gold)}\n\n`);
       else { wordLines(mode.color ? "truecolor" : "none").forEach((l) => w(`  ${l}\n`)); w("\n"); }
     },
     step(next) {
@@ -45,7 +45,7 @@ export function createUI({ out = process.stderr, mode = uiMode(), interval = 80,
       draw();
       if (!timer) { timer = setInterval(draw, interval); timer.unref?.(); }
     },
-    done(msg) { clear(); w(`${mode.tty ? `  ${gold(ok, BRAND.lime)} ` : ""}${msg}\n`); if (mode.tty) w(SHOW); },
+    done(msg) { clear(); w(`${mode.tty ? `  ${gold(ok, BRAND.gold)} ` : ""}${msg}\n`); if (mode.tty) w(SHOW); },
     calm(msg) { clear(); w(`${mode.tty ? "  " : ""}${msg}\n`); if (mode.tty) w(SHOW); },
     fail(msg, hint) { clear(); w(`${mode.tty ? `  ${bad} ` : ""}${msg}\n`); if (hint) w(`${mode.tty ? "    " : ""}${dim(hint)}\n`); if (mode.tty) w(SHOW); },
     stop() { clear(); if (mode.tty) w(SHOW); },

@@ -4,8 +4,8 @@
  * API key ditampilkan sebagai • per karakter (paste didukung, termasuk bracketed paste & CRLF dari Windows).
  */
 import { COLORS, wordLines } from "./logo.mjs";
-// warna brand (logo #5): bone-white + merah darah
-export const BRAND = { bone: COLORS.w, lime: COLORS.g };
+// warna brand (logo Gold Hunter #1): emas
+export const BRAND = { gold: COLORS.g };
 export const LOGO = wordLines("none");
 // glyph: Unicode (default) atau ASCII bila konsol Windows bukan UTF-8 (codepage ≠ 65001, bukan Windows Terminal) / KC_ASCII=1
 export const UNI = { bullet: "•", x: "×", arrow: "›", rule: "─", ok: "✓", bad: "✗", dot: "·", cur: "█", ell: "…", logo: true };
@@ -111,7 +111,7 @@ export function render(st, cols = 80, rows = 24, G = UNI) {
   const L = [];
   const W = Math.min(64, cols - 4);
   if (G.logo) wordLines("truecolor").forEach((l) => L.push(`${l.split(RST).join(RST + BG)}${RST}${BG}`));
-  else L.push(`${BOLD}${fgc(BRAND.bone)}Kerja${fgc(BRAND.lime)}coy${RST}${BG}`);
+  else L.push(`${BOLD}${fgc(BRAND.gold)}KERJACOY${RST}${BG}`);
   L.push("");
   L.push(`${DIM}Provider tersimpan${RST}${BG}`);
   if (!st.list.length) L.push(`${DIM}  (belum ada)${RST}${BG}`);
